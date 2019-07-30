@@ -101,7 +101,7 @@ contract EventTickets {
             - refund any surplus value sent with the transaction
             - emit the appropriate event
     */
-    function buyTickets(uint ticketsToBuy) public {
+    function buyTickets(uint ticketsToBuy) public payable {
         require(myEvent.isOpen != false, "Event is not open");
         require(myEvent.totalTickets > ticketsToBuy, "tickets availabe are less than selected");
         uint amountToPay = ticketsToBuy*TICKET_PRICE;
