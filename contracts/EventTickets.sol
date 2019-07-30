@@ -44,14 +44,14 @@ contract EventTickets {
         LogGetRefund should provide information about the refund requester and the number of tickets refunded.
         LogEndSale should provide infromation about the contract owner and the balance transferred to them.
     */
-    event LogBuyTickets(address indexed buyerAddress, uint tickets);
-    event LogGetRefund(address indexed buyerAddress, uint tickets);
+    event LogBuyTickets(address indexed buyerAddress, uint ticketsPurchased);
+    event LogGetRefund(address indexed buyerAddress, uint ticketsRefunded);
     event LogEndSale(address indexed buyerAddress, uint totalSales);
     /*
         Create a modifier that throws an error if the msg.sender is not the owner.
     */
     modifier isOwner(){
-        require(owner == msg.sender, "verifying owner");
+        require(msg.sender == owner, "verifying owner");
         _;
     }
     /*
@@ -101,16 +101,16 @@ contract EventTickets {
             - refund any surplus value sent with the transaction
             - emit the appropriate event
     */
-    function buyTickets(uint tickets) public payable {
+    function buyTickets(uint ticketsToBuy) public {
         require(myEvent.isOpen != false, "Event is not open");
         require(myEvent.totalTickets > tickets, "tickets availabe are less than selected");
-        require(msg.value > tickets*TICKET_PRICE, "Amount not available to purchase tickets");
-        uint amountToPay = tickets*TICKET_PRICE;
+        uint amountToPay = ticketsToBuy*TICKET_PRICE;
+        require(msg.value > amountToPay, "Amount not available to purchase tickets");
         msg.sender.transfer(amountToPay);
-        myEvent.buyers[msg.sender] = tickets;
-        myEvent.totalTickets -= tickets;
+        myEvent.buyers[msg.sender] = ticketsToBuy;
+        myEvent.totalTickets -= ticketsToBuy;
         myEvent.sales += amountToPay;
-        emit LogBuyTickets(owner, tickets);
+        emit LogBuyTickets(msg.sender, ticketsToBuy);
         //surplus transaction refund
         uint checkRefundAmount = msg.value - amountToPay;
         if(checkRefundAmount != 0){
@@ -145,10 +145,10 @@ contract EventTickets {
             - emit the appropriate event
     */
     function endSale() public isOwner() payable {
-        require(myEvent.totalTickets == 0, "No More tickets to sell");
-        owner.transfer(myEvent.sales); //is it correct?
+        //require(myEvent.totalTickets == 0, "No More tickets to sell");
+        owner.transfer(address(this).balance);
         myEvent.isOpen = false;
-        emit LogEndSale(owner, myEvent.sales);//should we use msg.value?
+        emit LogEndSale(owner, address(this).balance);
 
     }
 }
