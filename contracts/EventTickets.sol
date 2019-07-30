@@ -103,7 +103,7 @@ contract EventTickets {
     */
     function buyTickets(uint ticketsToBuy) public {
         require(myEvent.isOpen != false, "Event is not open");
-        require(myEvent.totalTickets > tickets, "tickets availabe are less than selected");
+        require(myEvent.totalTickets > ticketsToBuy, "tickets availabe are less than selected");
         uint amountToPay = ticketsToBuy*TICKET_PRICE;
         require(msg.value > amountToPay, "Amount not available to purchase tickets");
         msg.sender.transfer(amountToPay);
