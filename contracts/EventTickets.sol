@@ -105,9 +105,9 @@ contract EventTickets {
         require(myEvent.isOpen != false, "Event is not open");
         require(myEvent.totalTickets > ticketsToBuy, "tickets availabe are less than selected");
         uint amountToPay = ticketsToBuy*TICKET_PRICE;
-        require(msg.value > amountToPay, "Amount not available to purchase tickets");
+        require(msg.value >= amountToPay, "Amount not available to purchase tickets");
         msg.sender.transfer(amountToPay);
-        myEvent.buyers[msg.sender] = ticketsToBuy;
+        myEvent.buyers[msg.sender] += ticketsToBuy;
         myEvent.totalTickets -= ticketsToBuy;
         myEvent.sales += amountToPay;
         emit LogBuyTickets(msg.sender, ticketsToBuy);
