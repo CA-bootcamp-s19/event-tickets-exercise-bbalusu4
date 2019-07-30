@@ -104,18 +104,13 @@ contract EventTickets {
     function buyTickets(uint ticketsToBuy) public payable {
         require(myEvent.isOpen == true, "Event is not open");
         require(myEvent.totalTickets > ticketsToBuy, "tickets availabe are less than selected");
-        uint amountToPay = ticketsToBuy*TICKET_PRICE;
-        require(msg.value >= amountToPay, "Amount not available to purchase tickets");
-        //msg.sender.transfer(amountToPay);
+      //  uint amountToPay = ticketsToBuy*TICKET_PRICE;
+        require(msg.value >= ticketsToBuy*TICKET_PRICE, "Amount not available to purchase tickets");
+        msg.sender.transfer(msg.value-ticketsToBuy*TICKET_PRICE);
         myEvent.buyers[msg.sender] += ticketsToBuy;
         myEvent.totalTickets -= ticketsToBuy;
         myEvent.sales += ticketsToBuy;
         emit LogBuyTickets(msg.sender, ticketsToBuy);
-        //surplus transaction refund
-        uint checkRefundAmount = msg.value - amountToPay;
-        if(checkRefundAmount != 0){
-          msg.sender.transfer(checkRefundAmount);
-        }
     }
     /*
         Define a function called getRefund().
@@ -131,7 +126,7 @@ contract EventTickets {
         require(getBuyerTicketCount(msg.sender) != 0, "Tickets are not purchased by user");
         uint ticketsByUsers = getBuyerTicketCount(msg.sender);
         uint refundAmount = ticketsByUsers*TICKET_PRICE;
-        msg.sender.transfer((refundAmount));
+        msg.sender.transfer(refundAmount);
         myEvent.totalTickets -= ticketsByUsers;
         myEvent.sales -= ticketsByUsers;
         emit LogGetRefund(msg.sender, refundAmount);
@@ -148,7 +143,7 @@ contract EventTickets {
     function endSale() public isOwner() payable {
         //require(myEvent.totalTickets == 0, "No More tickets to sell");
         uint balance = myEvent.sales*TICKET_PRICE;
-        address(owner).transfer(balance);
+        owner.transfer(balance);
         myEvent.isOpen = false;
         emit LogEndSale(owner, balance);
 
