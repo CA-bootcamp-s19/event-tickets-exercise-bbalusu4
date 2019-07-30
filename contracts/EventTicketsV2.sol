@@ -73,7 +73,7 @@ contract EventTicketsV2 {
     */
     function addEvent(string memory _description, string memory _URL, uint _totaltickets) public verifyOwner returns(uint) {
         events[idGenerator] = Event({description: _description, website: _URL, totalTickets: _totaltickets, sales:0, isOpen: true});
-        emit LogEventAdded(_description, _URL, _totaltickets, idGenerator);
+        emit LogEventAdded(events[idGenerator].description, events[idGenerator].website, events[idGenerator].totalTickets, idGenerator);
         idGenerator ++;
         return idGenerator;
     }
@@ -112,7 +112,7 @@ contract EventTicketsV2 {
         require(events[eventId].totalTickets >= ticketCount, "verifying tickets availablility");
         msg.sender.transfer(ticketsPrice);
         events[eventId].buyers[msg.sender] += ticketCount;
-        events[eventId].sales += ticketsPrice;
+        events[eventId].sales += ticketCount;
         events[eventId].totalTickets -= ticketCount;
         emit LogBuyTickets(msg.sender, eventId, ticketCount);
     }
@@ -134,7 +134,7 @@ contract EventTicketsV2 {
         msg.sender.transfer(priceOfTickets);
         events[eventId].totalTickets += ticketsBought;
         events[eventId].buyers[msg.sender] -= ticketsBought;
-        events[eventId].sales -= priceOfTickets;
+        events[eventId].sales -= ticketsBought;
         emit LogGetRefund(owner, eventId, ticketsBought);
     }
     /*
@@ -155,8 +155,9 @@ contract EventTicketsV2 {
             - emit the appropriate event
     */
     function endSale(uint eventId) public verifyOwner {
-        owner.transfer(address(this).balance);
+        uint balance = events[eventId].sales*PRICE_TICKET;
+        owner.transfer(balance);
         events[eventId].isOpen = false;
-        emit LogEndSale(eventId, address(this).balance);
+        emit LogEndSale(eventId, balance);
     }
 }
