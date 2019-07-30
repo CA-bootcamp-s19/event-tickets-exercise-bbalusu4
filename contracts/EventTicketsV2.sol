@@ -44,7 +44,7 @@ contract EventTicketsV2 {
     event LogEventAdded(string desc, string url, uint ticketsAvailable, uint eventId);
     event LogBuyTickets(address buyer, uint eventId, uint numTickets);
     event LogGetRefund(address accountRefunded, uint eventId, uint numTickets);
-    event LogEndSale(uint eventId, uint totalSales);
+    event LogEndSale(address ownerAddress, uint totalSales, uint eventId);
 
     /*
         Create a modifier that throws an error if the msg.sender is not the owner.
@@ -72,7 +72,7 @@ contract EventTicketsV2 {
             - return the event's ID
     */
     function addEvent(string memory _description, string memory _URL, uint _totaltickets) public verifyOwner returns(uint) {
-        events[idGenerator] = Event({description: _description, website: _URL, totalTickets: _totaltickets, sales:0, isOpen: true});
+        events[idGenerator] = Event({description: _description, website: _URL, totalTickets: _totaltickets, sales: 0, isOpen: true});
         emit LogEventAdded(events[idGenerator].description, events[idGenerator].website, events[idGenerator].totalTickets, idGenerator);
         idGenerator ++;
         return idGenerator;
@@ -106,11 +106,11 @@ contract EventTicketsV2 {
             - emits the appropriate event
     */
     function buyTickets(uint eventId, uint ticketCount) public payable {
-        require(events[eventId].isOpen, "verifying if event is open");
-        uint ticketsPrice = ticketCount*PRICE_TICKET;
-        require(msg.value >= ticketsPrice, "verifying balance of buyer");
+        require(events[eventId].isOpen == true, "verifying if event is open");
+        //uint ticketsPrice = ticketCount*PRICE_TICKET;
+        require(msg.value >= ticketCount*PRICE_TICKET, "verifying balance of buyer");
         require(events[eventId].totalTickets >= ticketCount, "verifying tickets availablility");
-        msg.sender.transfer(ticketsPrice);
+        msg.sender.transfer(msg.value-ticketCount*PRICE_TICKET);
         events[eventId].buyers[msg.sender] += ticketCount;
         events[eventId].sales += ticketCount;
         events[eventId].totalTickets -= ticketCount;
@@ -126,16 +126,15 @@ contract EventTicketsV2 {
             - send appropriate value to the refund requester
             - emit the appropriate event
     */
-    function getRefund(uint eventId) public payable {
-        //is it owner or msg.sender?
+    function getRefund(uint eventId) public{
         uint ticketsBought = events[eventId].buyers[msg.sender];
         require(ticketsBought > 0, "No tickets to refund");
         uint priceOfTickets = ticketsBought*PRICE_TICKET;
-        msg.sender.transfer(priceOfTickets);
         events[eventId].totalTickets += ticketsBought;
         events[eventId].buyers[msg.sender] -= ticketsBought;
         events[eventId].sales -= ticketsBought;
-        emit LogGetRefund(owner, eventId, ticketsBought);
+        msg.sender.transfer(priceOfTickets);
+        emit LogGetRefund(msg.sender, eventId, ticketsBought);
     }
     /*
         Define a function called getBuyerNumberTickets()
@@ -154,10 +153,10 @@ contract EventTicketsV2 {
             - transfer the balance from those event sales to the contract owner
             - emit the appropriate event
     */
-    function endSale(uint eventId) public verifyOwner {
+    function endSale(uint eventId) public verifyOwner() {
         uint balance = events[eventId].sales*PRICE_TICKET;
-        owner.transfer(balance);
         events[eventId].isOpen = false;
-        emit LogEndSale(eventId, balance);
+        owner.transfer(balance);
+        emit LogEndSale(owner, balance, eventId);
     }
 }
